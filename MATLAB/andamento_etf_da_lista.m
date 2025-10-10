@@ -32,7 +32,7 @@ errori = table('Size', [0, 2], ...
 % Inizia ciclo su ogni ETF
 for i = 1:length(lista_etf)
     etf = lista_etf{i};
-    file_csv = fullfile('dati', [etf '_dati.csv']);
+    file_csv = fullfile('Dati', [etf '_dati.csv']);
 
     % Verifica esistenza file
     if ~isfile(file_csv)

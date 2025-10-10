@@ -1,6 +1,6 @@
 % Lista degli INDICI da elaborare
 lista_indici = {'DJI', 'FTSE', 'FTSEMIB.MI', 'GDAXI', 'GSPC', 'HSI', 'IXIC', ...
-    'N225', 'NYA', 'STOXX50E', 'VIX', 'XAX', 'XDE', 'MOVE'};
+    'N225', 'NYA', 'STOXX50E', 'VIX', 'XAX', 'XDE', 'MOVE', 'SPX'};
 
 % Cartella di output per i grafici
 output_dir = 'Grafici_INDICI';
@@ -18,15 +18,15 @@ errori = table('Size', [0, 2], ...
     'VariableTypes', {'string', 'string'}, ...
     'VariableNames', {'Indice', 'Errore'});
 
-% Inizia ciclo su ogni ETF
+% Inizia ciclo su ogni indice
 for i = 1:length(lista_indici)
-    etf = lista_indici{i};
-    file_csv = fullfile('indici', [etf '_dati.csv']);
+    indice = lista_indici{i};
+    file_csv = fullfile('Dati', [indice '_dati.csv']);
 
     % Verifica esistenza file
     if ~isfile(file_csv)
         fprintf('⚠️  File %s non trovato.\n', file_csv);
-        errori = [errori; {etf, 'File non trovato'}];
+        errori = [errori; {indice, 'File non trovato'}];
         continue;
     end
 
@@ -39,15 +39,15 @@ for i = 1:length(lista_indici)
         dati = readtable(file_csv, opts);
     catch err
         fprintf('❌ Errore nel leggere %s: %s\n', file_csv, err.message);
-        errori = [errori; {etf, sprintf('Errore lettura file: %s', err.message)}];
+        errori = [errori; {indice, sprintf('Errore lettura file: %s', err.message)}];
         continue;
     end
 
     % Controllo colonna chiusura
-    nome_colonna_chiusura = [etf '.Close'];
+    nome_colonna_chiusura = [indice '.Close'];
     if ~ismember(nome_colonna_chiusura, dati.Properties.VariableNames)
         fprintf('❌ Colonna %s mancante in %s.\n', nome_colonna_chiusura, file_csv);
-        errori = [errori; {etf, 'Colonna .Close mancante'}];
+        errori = [errori; {indice, 'Colonna .Close mancante'}];
         continue;
     end
 
@@ -58,8 +58,8 @@ for i = 1:length(lista_indici)
 
         % Validazione dati
         if numel(prezzi_chiusura) < 200
-            fprintf('⚠️  ETF %s ha meno di 200 dati. Saltato.\n', etf);
-            errori = [errori; {etf, 'Dati insufficienti (<200)'}];
+            fprintf('⚠️  Indice %s ha meno di 200 dati. Saltato.\n', indice);
+            errori = [errori; {indice, 'Dati insufficienti (<200)'}];
             continue;
         end
 
@@ -79,11 +79,11 @@ for i = 1:length(lista_indici)
         data_fine = max(date);
 
         % Salva riepilogo
-        nuova_riga = {etf, ultimo_prezzo, ultima_sma_200, ultima_regressione, data_inizio, data_fine};
+        nuova_riga = {indice, ultimo_prezzo, ultima_sma_200, ultima_regressione, data_inizio, data_fine};
         riepilogo = [riepilogo; nuova_riga];
 
         % Grafico
-        figure('Visible', 'off', 'Name', sprintf('Andamento %s', etf));
+        figure('Visible', 'off', 'Name', sprintf('Andamento %s', indice));
         hold on;
         plot(date, prezzi_chiusura, 'g-', 'LineWidth', 1.5, ...
             'DisplayName', sprintf('Prezzo di chiusura (ultimo: %.2f EUR)', ultimo_prezzo));
@@ -94,30 +94,30 @@ for i = 1:length(lista_indici)
         hold off;
         xlabel('Data');
         ylabel('Prezzo di chiusura (EUR)');
-        %title(sprintf('Andamento %s con regressione e SMA 200', etf));
-        title(sprintf('Andamento %s', etf));
+        %title(sprintf('Andamento %s con regressione e SMA 200', indice));
+        title(sprintf('Andamento %s', indice));
         legend('show', 'Location', 'best');
         grid on;
 
         % Salva grafico
-        filename_png = fullfile(output_dir, sprintf('Andamento_%s.png', etf));
+        filename_png = fullfile(output_dir, sprintf('Andamento_%s.png', indice));
         exportgraphics(gcf, filename_png, 'Resolution', 100);
         close(gcf);
 
         % Output console
-        fprintf('✅ %s processato correttamente.\n', etf);
+        fprintf('✅ %s processato correttamente.\n', indice);
 
     catch err
-        fprintf('❌ Errore nel processare %s: %s\n', etf, err.message);
-        errori = [errori; {etf, sprintf('Errore elaborazione: %s', err.message)}];
+        fprintf('❌ Errore nel processare %s: %s\n', indice, err.message);
+        errori = [errori; {indice, sprintf('Errore elaborazione: %s', err.message)}];
         continue;
     end
 end
 
 % Salva riepilogo e errori
-writetable(riepilogo, 'riepilogo_etf.csv');
-writetable(errori, 'etf_non_processati.csv');
+writetable(riepilogo, 'riepilogo_indici.csv');
+writetable(errori, 'indici_non_processati.csv');
 
-fprintf('\n📝 Riepilogo salvato in: riepilogo_etf.csv\n');
-fprintf('🚫 ETF non processati salvati in: etf_non_processati.csv\n');
-fprintf('🏁 Fine elaborazione di tutti gli ETF.\n');
+fprintf('\n📝 Riepilogo salvato in: riepilogo_indici.csv\n');
+fprintf('🚫 Indici non processati salvati in: indici_non_processati.csv\n');
+fprintf('🏁 Fine elaborazione di tutti gli indici.\n');
